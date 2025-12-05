@@ -1,3 +1,5 @@
+
+
 template <typename T>
 concept ConvertibleToLL = std::convertible_to<T, long long>;
 class modulo {

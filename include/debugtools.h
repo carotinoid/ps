@@ -1,3 +1,6 @@
+#ifndef DEBUGTOOLS_H
+#define DEBUGTOOLS_H
+
 #include <iostream>
 #include <random>
 #include <chrono>
@@ -9,15 +12,16 @@ void _DEBUG() { cout<<endl; }
 template <typename T,typename... Args>
 void _DEBUG(T first,Args... args) { cout<<first<<" ";_DEBUG(args...);}
 template <typename... Args>
-void DEBUG(COLOR color,string indicator,Args... args) {
+void DEBUG(COLOR color,Args... args) {
 #ifndef NO_COLOR
     auto idx = static_cast<int>(color);
     if (0 <= idx and idx < static_cast<int>(COLOR::COUNT))
         cout << color_codes[idx];
 #endif
-    cout << "[" << indicator << "] ";
     _DEBUG(args...);
 #ifndef NO_COLOR
     cout << "\033[0m";
 #endif
 }
+
+#endif

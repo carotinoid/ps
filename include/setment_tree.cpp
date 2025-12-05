@@ -1,3 +1,6 @@
+#ifndef SEGMENT_TREE_H
+#define SEGMENT_TREE_H
+
 template <typename T, T(*op)(T, T), T I>
 struct Segtree {
 
@@ -55,4 +58,9 @@ struct Segtree {
         return _get(st, en, 1, 1, arr_size);
     }
 };
-using Seg = Segtree<ll, [](ll a, ll b){return a + b;}, 0LL>;
+long long sum_op(long long a, long long b) {
+    return a + b;
+}
+using Seg = Segtree<long long, sum_op, 0LL>;
+
+#endif // SEGMENT_TREE_H

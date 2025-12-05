@@ -107,6 +107,8 @@ FILE_CODE=main.cpp
 
 USE_EXIST_INPUT=0
 CHECK_TIMEOUT=0
+CHECK_RUNTIME_ERROR=0
+EXIT_CODE=0
 ExecutionTime=2
 VERSION=0.0.2
 OLD_IFS=$IFS
@@ -139,14 +141,17 @@ EOF
 cleanup() {
     trap - SIGINT SIGTERM ERR EXIT
     IFS=$OLD_IFS
-    if [[ -s $SRC_OTHER/input.txt ]]; then
+    if [[ -f $SRC_OTHER/input.txt ]]; then
         Print_line "Input" 
         msg "$(cat $SRC_OTHER/input.txt)"
         Print_line 
     fi
+
     if (( CHECK_TIMEOUT )); then
-        Print_line "TIMEOUT" 
-        msg "Program cannot be executed successfully in ${RED}$ExecutionTime${NOFORMAT} seconds."
+        msg "${RED}[FAIL] Time Limit Exceeded${NOFORMAT} (> ${ExecutionTime}s)"
+        Print_line
+    elif (( CHECK_RUNTIME_ERROR )); then
+        msg "${RED}[FAIL] Runtime Error${NOFORMAT} (Exit Code: $EXIT_CODE)"
         Print_line
     fi
     if [[ -s $SRC_OTHER/output.txt ]]; then
@@ -184,7 +189,12 @@ parse_params() {
         ExecutionTime="${2-}"
         shift ;;
         -d | --direct)
-        $TEMP/$FILE_CODE.run
+        if [[ -f "$TEMP/$FILE_CODE.run" ]]; then
+            "$TEMP/$FILE_CODE.run"
+            exit $?
+        else
+            die "Error: Binary not found at $TEMP/$FILE_CODE.run"
+        fi
         ;;
         -?*) die "Unknown option: $1" ;;
         *) break ;;
@@ -198,11 +208,14 @@ parse_params() {
 # Setup
 parse_params "$@"
 setup_colors
+
+mkdir -p "$TEMP"
+mkdir -p "$SRC_OTHER"
+
 trap cleanup SIGINT SIGTERM ERR EXIT
 If_exist_then_delete $SRC_OTHER/output.txt
 If_exist_then_delete $TEMP/exec_err
 If_exist_then_delete $TEMP/compile_err
-If_exist_then_delete $TEMP/compile_succ
 
 # Check update
 need_compile=0
@@ -222,35 +235,58 @@ fi
 # Compile
 time_startCompile=$(date +%s.%3N)
 if (( need_compile )); then
-    g++ -o $TEMP/$FILE_CODE.run -O2 -DDEBUGTOOLS -Wno-unused-but-set-variable -Wno-unused-variable  -lm -static -std=c++2a -g $SRC_TARGET/$FILE_CODE 2> $TEMP/compile_err &
+    g++ -o $TEMP/$FILE_CODE.run -O2 -DDEBUGTOOLS -fsanitize=undefined,address -Wno-unused-but-set-variable -Wno-unused-variable -lm -std=c++2a -g $SRC_TARGET/$FILE_CODE 2> $TEMP/compile_err &
     pid=$!
     while kill -0 $pid 2>/dev/null; do
-        sleep 1
+        sleep 0.5
         (( CompileDoneNumofBackspace++ ))
         msg_n "${ORANGE}.${NOFORMAT}"
     done
     Erase $CompileDoneNumofBackspace
-    if [[ -s $TEMP/compile_err ]]; then
+
+    if wait $pid; then
+        :
+    else
         msg "${RED}Compile incomplete!${NOFORMAT}"
-        cat $TEMP/compile_err
-        rm $TEMP/$FILE_CODE.hash
-        die "${RED}ERROR OCCURED.${NOFORMAT}"
+        cat "$TEMP/compile_err"
+        rm "$TEMP/$FILE_CODE.hash"
+        trap - SIGINT SIGTERM ERR EXIT
+        exit 1
     fi
+
     time_endCompile=$(date +%s.%3N)
     time_elapsedCompile=$(echo "$time_endCompile - $time_startCompile" | bc)
     msg_n "${GREEN}Compile Done!${NOFORMAT} "
     msg_n "${GREEN}($time_elapsedCompile"
     msg "s)${NOFORMAT}"
+
+    # if [[ -s $TEMP/compile_err ]]; then
+    #     msg "${RED}Compile incomplete!${NOFORMAT}"
+    #     cat $TEMP/compile_err
+    #     rm $TEMP/$FILE_CODE.hash
+    #     die "${RED}ERROR OCCURED.${NOFORMAT}"
+    # fi
+    # time_endCompile=$(date +%s.%3N)
+    # time_elapsedCompile=$(echo "$time_endCompile - $time_startCompile" | bc)
+    # msg_n "${GREEN}Compile Done!${NOFORMAT} "
+    # msg_n "${GREEN}($time_elapsedCompile"
+    # msg "s)${NOFORMAT}"
 fi
 
 # Input
 if ! (( USE_EXIST_INPUT )); then
+    msg "${CYAN}[Input Data] Paste content and press Ctrl+D:${NOFORMAT}"
     cat > $SRC_OTHER/input.txt
 fi
 
 # Execution
-timeout $ExecutionTime $TEMP/$FILE_CODE.run < $SRC_OTHER/input.txt > $SRC_OTHER/output.txt 2> $TEMP/exec_err
-if [[ $? -eq 124 ]]; then
+set +e 
+timeout "$ExecutionTime" "$TEMP/$FILE_CODE.run" < "$SRC_OTHER/input.txt" > "$SRC_OTHER/output.txt" 2> "$TEMP/exec_err"
+EXIT_CODE=$?
+set -e
+
+if [[ $EXIT_CODE -eq 124 ]]; then
     CHECK_TIMEOUT=1
-    msg "${RED}TIMEOUT OCCURED. ($ExecutionTime seconds)${NOFORMAT}"
+elif [[ $EXIT_CODE -ne 0 ]]; then
+    CHECK_RUNTIME_ERROR=1
 fi
