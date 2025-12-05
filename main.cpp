@@ -19,8 +19,8 @@
 using namespace std;
 using ll = long long; using ld = long double;
 using point = pair<ld,ld>;
-const long long mod = 1'000'000'007;
-// const long long mod = 998'244'353;
+// const long long mod = 1'000'000'007;
+const long long mod = 998'244'353;
 void setup();
 void solve();
 mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
@@ -29,8 +29,11 @@ mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
 #ifdef DEBUGTOOLS
 #include "include/debugtools.h" // should be excluded
 #endif
-#include "include/fastio.h"
 // #include "include/pbds.h"
+// #include "include/fastio.h"
+#include "include/mint.h"
+#include "include/polynomial.h"
+// #include "include/fps.h"
 
 /* Configuration finalization */
 #ifndef FASTIO_H
@@ -48,12 +51,14 @@ enum class COLOR: int {RED=0,GREEN,ORANGE,BLUE,PURPLE,CYAN,YELLOW,COUNT};
 
 /* Write code here*/
 
+using mint998244353 = mint<998'244'353>;
 
 void solve()
 {
-    getints(a, b);
-    DEBUG(COLOR::RED, a, b);
-    cout << a + b << endl;
+    poly<mint998244353> A;
+    getint(n);
+    forr(i, n) {getint(t); A.pb(t);}
+    cout << A.log() << endl;
 }
 
 void setup() {}

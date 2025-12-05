@@ -235,7 +235,8 @@ fi
 # Compile
 time_startCompile=$(date +%s.%3N)
 if (( need_compile )); then
-    g++ -o $TEMP/$FILE_CODE.run -O2 -DDEBUGTOOLS -fsanitize=undefined,address -Wno-unused-but-set-variable -Wno-unused-variable -lm -std=c++2a -g $SRC_TARGET/$FILE_CODE 2> $TEMP/compile_err &
+
+    g++ -o $TEMP/$FILE_CODE.run -I$WORKSPACE -O2 -DDEBUGTOOLS -fsanitize=undefined,address -Wno-unused-but-set-variable -Wno-unused-variable -lm -std=c++2a -g $SRC_TARGET/$FILE_CODE 2> $TEMP/compile_err &
     pid=$!
     while kill -0 $pid 2>/dev/null; do
         sleep 0.5
