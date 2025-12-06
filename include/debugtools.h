@@ -6,7 +6,6 @@
 #include <chrono>
 using namespace std;
 
-
 #ifdef DEBUGTOOLS
 
 enum class COLOR: int {RED=0,GREEN,ORANGE,BLUE,PURPLE,CYAN,YELLOW,COUNT};
@@ -35,7 +34,5 @@ void DEBUG(T first, Args... args) {DEBUG(args...);}
 enum class COLOR: int {RED=0,GREEN,ORANGE,BLUE,PURPLE,CYAN,YELLOW,COUNT};
 
 #endif // DEBUGTOOLS (toggle)
-
-
 
 #endif // DEBUGTOOLS_H

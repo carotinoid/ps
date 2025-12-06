@@ -1,7 +1,7 @@
 #include <random>
 #include <chrono>
 #define fastio \
-cin.tie(0) -> sync_with_stdio(0); setup();
+cin.tie(0) -> sync_with_stdio(0);
 #define forr(i, n) for(ll i=1;i<=(n);i++)
 #define fors(i, s, e) for(ll i=(s);i<=(e);i++)
 #define fore(i, e, s) for(ll i=(e);i>=(s);i--)

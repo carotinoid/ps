@@ -24,7 +24,6 @@ constexpr long long constexpr_pow(long long base, long long exp, long long mod) 
 }
 
 constexpr int find_primitive_root(long long mod) {
-    assert(false);
     // NOT IMPLEMENTED
     return -1;
 }
@@ -33,7 +32,6 @@ constexpr int get_primitive_root(long long mod) {
     if (mod == 998244353) return 3;
     else find_primitive_root(mod);
 }
-
 
 template <typename T>
 struct poly_traits;
@@ -136,7 +134,7 @@ public:
     }
 
     void push_back(const T& a) { V.push_back(a); }
-    void resize(int n) { V.resize(n); }
+    poly& resize(int n) { V.resize(n); return *this; }
     int size() const { return V.size(); }
     int deg() const { return size() - 1; }
 
@@ -220,7 +218,6 @@ public:
         return res;
     }
     poly log(int t) {
-        int n = size();
         poly<T> f_prime = this->derivate();
         poly<T> f = *this;
         poly<T> g = f_prime * f.inv(t);
