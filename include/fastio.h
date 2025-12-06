@@ -115,5 +115,6 @@ public:
 static FastIO _fast_io_instance;
 
 #define cin _fast_io_instance
+#define fastio 42 // Redefined existing macro
 
 #endif

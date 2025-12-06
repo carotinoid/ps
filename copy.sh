@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 
 FILE=${1:-main.cpp}
-INCLUDE_DIR="include"
-
-BLACKLIST=("debugtools.h")
 
 if ! command -v xclip &> /dev/null; then
     echo "Error: xclip is not installed."
@@ -15,34 +12,41 @@ if [ ! -f "$FILE" ]; then
     exit 1
 fi
 
-(
-    while IFS= read -r line || [ -n "$line" ]; do
-        if [[ "$line" =~ ^[[:space:]]*#include[[:space:]]*\"include/(.+)\" ]]; then
-            TARGET_FILE="${BASH_REMATCH[1]}"
-            FULL_PATH="$INCLUDE_DIR/$TARGET_FILE"
-            
-            IS_BLACKLISTED=0
-            for ban in "${BLACKLIST[@]}"; do
-                if [[ "$ban" == "$TARGET_FILE" ]]; then
-                    IS_BLACKLISTED=1
-                    break
-                fi
-            done
+declare -A PROCESSED_FILES
 
-            if [[ $IS_BLACKLISTED -eq 1 ]]; then
-                echo "// [Excluded] $line"
-            elif [ -f "$FULL_PATH" ]; then
-                echo "// [Expanded] $line"
-                cat "$FULL_PATH"
-                echo "" 
+expand_file() {
+    local current_file="$1"
+    
+    if [ ! -f "$current_file" ]; then
+        echo "// Warning: Cannot read '$current_file'"
+        return
+    fi
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        if [[ "$line" =~ ^[[:space:]]*#include[[:space:]]*\"(include/[^\"]+)\" ]]; then
+            local target_path="${BASH_REMATCH[1]}"
+
+            if [ -f "$target_path" ]; then
+                if [ -z "${PROCESSED_FILES["$target_path"]}" ]; then
+                    PROCESSED_FILES["$target_path"]=1
+                    
+                    echo "// [Expanded] $line"
+                    expand_file "$target_path"
+                    echo "" 
+                else
+                    echo "// [Skipped] $line (Already included)"
+                fi
             else
-                echo "Warning: '$FULL_PATH' not found. Keeping original line." >&2
+                echo "// Warning: '$target_path' not found on disk." >&2
                 echo "$line"
             fi
         else
             echo "$line"
         fi
-    done < "$FILE"
-) | xclip -selection clipboard
+    done < "$current_file"
+}
+
+PROCESSED_FILES["$FILE"]=1
+expand_file "$FILE" | xclip -selection clipboard
 
 echo -e "\033[32mSuccessfully copied '$FILE' with headers expanded to clipboard!\033[0m"

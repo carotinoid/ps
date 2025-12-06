@@ -6,6 +6,9 @@
 #include <chrono>
 using namespace std;
 
+
+#ifdef DEBUGTOOLS
+
 enum class COLOR: int {RED=0,GREEN,ORANGE,BLUE,PURPLE,CYAN,YELLOW,COUNT};
 constexpr std::string_view color_codes[] = {"\033[31m","\033[0;32m","\033[0;33m","\033[0;34m","\033[0;35m","\033[0;36m","\033[1;33m"};
 void _DEBUG() { cout<<endl; }
@@ -24,4 +27,15 @@ void DEBUG(COLOR color,Args... args) {
 #endif
 }
 
-#endif
+#else
+
+void DEBUG() {}
+template <typename T,typename... Args>
+void DEBUG(T first, Args... args) {DEBUG(args...);} 
+enum class COLOR: int {RED=0,GREEN,ORANGE,BLUE,PURPLE,CYAN,YELLOW,COUNT};
+
+#endif // DEBUGTOOLS (toggle)
+
+
+
+#endif // DEBUGTOOLS_H

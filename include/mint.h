@@ -1,6 +1,13 @@
 #ifndef MINT_H
 #define MINT_H // modular integer
 
+#include <iostream>
+#include <vector>
+#include <cassert>
+#include <algorithm>
+
+using namespace std;
+
 template <long long mod>
 class mint {
 private:
@@ -8,12 +15,19 @@ private:
 
 public:
     mint(): _v(0) {}
-    mint(int a): _v(a % mod) {}
-    mint(long long a): _v (a % mod) {}
+    mint(int a): _v((a % mod + mod) % mod) {}
+    mint(long long a): _v ((a % mod + mod) % mod) {}
     
-    int modulus() const { return mod; }
     int val() const { return _v; }
-    mint pow(long long k) {
+    int get_mod() const { return mod; }
+    int get_w() const {
+        // primitive root for mod
+        if (mod == 998244353) return 3;
+        if (mod == 1000000007) return 5;
+        assert(false); // primitive root not set
+        return -1;
+    }
+    mint pow(long long k) const {
         assert(0 <= k);
         mint x = *this, r = 1;
         while (k) {
@@ -80,7 +94,7 @@ public:
         return lhs._v != rhs._v;
     }
     friend istream& operator>>(istream& is, mint& a) {
-        int num;
+        long long num;
         is >> num;
         a._v = num;
         return is;
