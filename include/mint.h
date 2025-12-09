@@ -67,7 +67,7 @@ public:
     }
     constexpr mint& operator-=(const mint& a) noexcept {
         _v -= a._v;
-        if (_v < 0) _v += mod; // _v가 long long이므로 음수 체크 가능
+        if (_v < 0) _v += mod;
         return *this;
     }
     constexpr mint& operator*=(const mint& a) noexcept {
