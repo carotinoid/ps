@@ -7,19 +7,28 @@
 // #include "include/pbds.h"
 
 using namespace std;
-using ll = long long;
-
 constexpr long long mod = 998'244'353;
+using mint998244353 = mint<998244353>;
 
-using mint998244353 = mint<998'244'353>;
-
-void solve()
+void solve() 
 {
-    poly<mint998244353> A;
-    getint(n); n++;
-    forr(i, n) {getint(t); A.pb(t);}
-    cout << (A + mint998244353(1)).log(n) << endl;
-    cout << (A.exp(n) - mint998244353(1)).resize(n) << endl;
+    getints(n, m);
+    n++;
+    poly<mint998244353> C;
+    vector<mint998244353> pts;
+    forr(i, n) {
+        getint(a);
+        C.pb(a);
+    }
+    forr(i, m) {
+        getint(x);
+        pts.pb(x);
+    }
+    C = C.reverse();
+    vector<mint998244353> res = multipoint_evaluation(C, pts);
+    for(auto &x: res) {
+        cout << x << " ";
+    }
 }
 
 int main()

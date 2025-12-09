@@ -6,28 +6,18 @@
 #include <cassert>
 #include <algorithm>
 
-using namespace std;
-
 template <long long mod>
 class mint {
 private:
-    unsigned int _v;
+    long long _v;
 
 public:
-    mint(): _v(0) {}
-    mint(int a): _v((a % mod + mod) % mod) {}
-    mint(long long a): _v ((a % mod + mod) % mod) {}
-    
-    int val() const { return _v; }
-    int get_mod() const { return mod; }
-    int get_w() const {
-        // primitive root for mod
-        if (mod == 998244353) return 3;
-        if (mod == 1000000007) return 5;
-        assert(false); // primitive root not set
-        return -1;
-    }
-    mint pow(long long k) const {
+    constexpr mint() noexcept : _v(0) {}
+    constexpr mint(int a) noexcept : _v(a % mod) {if (_v < 0) _v += mod;}
+    constexpr mint(long long a) noexcept : _v(a % mod) {if (_v < 0) _v += mod;}
+
+    constexpr long long  val() const noexcept { return _v; }
+    constexpr mint pow(long long k) const noexcept {
         assert(0 <= k);
         mint x = *this, r = 1;
         while (k) {
@@ -37,7 +27,7 @@ public:
         }
         return r;
     }
-    mint inv() const {
+    constexpr mint inv() const noexcept {
         long long a = _v, b = mod;
         long long u = 1, v = 0;
         while (b) {
@@ -46,33 +36,46 @@ public:
             u -= t * v; std::swap(u, v);
         }
         assert(a == 1);     
-        if (u < 0) u += mod;
         return mint(u);
     }
-    mint operator+() const { return *this; }
-    mint operator-() const { return mint() - *this; }
-    mint& operator++() {
-        _v = (_v + 1) % mod;
+    constexpr mint operator+() const noexcept { return *this; }
+    constexpr mint operator-() const noexcept { return mint() - *this; }
+    constexpr mint& operator++() noexcept {
+        _v ++;
+        if (_v == mod) _v = 0;
         return *this;
     }
-    mint& operator--() {
-        _v = (_v + mod - 1) % mod;
+    constexpr mint& operator--() noexcept {
+        _v --;
+        if (_v == -1) _v = mod - 1;
         return *this;
     }
-    mint& operator+=(const mint& a) {
-        _v = (_v + a._v) % mod;
+    constexpr mint operator++(int) noexcept {
+        mint temp = *this;
+        ++*this;
+        return temp;
+    }
+    constexpr mint operator--(int) noexcept {
+        mint temp = *this;
+        --*this;
+        return temp;
+    }
+    constexpr mint& operator+=(const mint& a) noexcept {
+        _v += a._v;
+        if (_v >= mod) _v -= mod;
         return *this;
     }
-    mint& operator-=(const mint& a) {
-        _v = (_v + mod - a._v) % mod;
+    constexpr mint& operator-=(const mint& a) noexcept {
+        _v -= a._v;
+        if (_v < 0) _v += mod; // _v가 long long이므로 음수 체크 가능
         return *this;
     }
-    mint& operator*=(const mint& a) {
-        _v = (unsigned long long)(_v) * a._v % mod;
+    constexpr mint& operator*=(const mint& a) noexcept {
+        _v = _v * a._v % mod;
         return *this;
     }
-    mint& operator/=(const mint& a) {
-        return *this = *this * a.inv();
+    constexpr mint& operator/=(const mint& a) noexcept {
+        return *this *= a.inv();
     }
 
     friend mint operator+(const mint& lhs, const mint& rhs) {
@@ -96,7 +99,7 @@ public:
     friend istream& operator>>(istream& is, mint& a) {
         long long num;
         is >> num;
-        a._v = num;
+        a._v = num % mod;
         return is;
     }
     friend ostream& operator<<(ostream& os, const mint& a) {
@@ -104,5 +107,10 @@ public:
     }
 
 };
+
+template <long long mod>
+mint<mod> pow(const mint<mod>& a, long long k) { return a.pow(k); }
+template <long long mod>
+mint<mod> pow(const mint<mod>& a, int k) { return a.pow(k); }
 
 #endif // MINT_H
