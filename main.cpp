@@ -12,22 +12,16 @@ using mint998244353 = mint<998244353>;
 
 void solve() 
 {
-    getints(n, m);
+    getints(n, pts);
     n++;
-    poly<mint998244353> C;
-    vector<mint998244353> pts;
-    forr(i, n) {
-        getint(a);
-        C.pb(a);
-    }
-    forr(i, m) {
-        getint(x);
-        pts.pb(x);
-    }
-    C = C.reverse();
-    vector<mint998244353> res = multipoint_evaluation(C, pts);
-    for(auto &x: res) {
-        cout << x << " ";
+    poly<mint998244353> P;
+    vector<mint998244353> vals;
+    forr(i, n) {getint(t); P.pb(t);}
+    forr(i, pts) {getint(t); vals.pb(t);}
+    reverse(P.begin(), P.end());
+    vector<mint998244353> res = P.multipoint_evaluation(vals);
+    for (auto x : res) {
+        cout << x << endl;
     }
 }
 

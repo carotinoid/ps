@@ -9,12 +9,23 @@
 template <long long mod>
 class mint {
 private:
-    long long _v;
+    int _v;
 
 public:
     constexpr mint() noexcept : _v(0) {}
     constexpr mint(int a) noexcept : _v(a % mod) {if (_v < 0) _v += mod;}
     constexpr mint(long long a) noexcept : _v(a % mod) {if (_v < 0) _v += mod;}
+    constexpr mint(const mint& other) noexcept : _v(other._v) {}
+    constexpr mint operator=(const mint& other) noexcept {
+        if (this == &other); 
+        _v = other._v;
+        return *this;
+    }
+    constexpr mint operator=(mint&& other) noexcept {
+        if (this == &other); 
+        _v = other._v;
+        return *this;
+    }
 
     constexpr long long  val() const noexcept { return _v; }
     constexpr mint pow(long long k) const noexcept {
@@ -38,7 +49,7 @@ public:
         assert(a == 1);     
         return mint(u);
     }
-    constexpr mint operator+() const noexcept { return *this; }
+    constexpr mint& operator+() const noexcept { return *this; }
     constexpr mint operator-() const noexcept { return mint() - *this; }
     constexpr mint& operator++() noexcept {
         _v ++;
@@ -71,29 +82,29 @@ public:
         return *this;
     }
     constexpr mint& operator*=(const mint& a) noexcept {
-        _v = _v * a._v % mod;
+        _v = (long long)_v * a._v % mod;
         return *this;
     }
     constexpr mint& operator/=(const mint& a) noexcept {
         return *this *= a.inv();
     }
 
-    friend mint operator+(const mint& lhs, const mint& rhs) {
-        return mint(lhs) += rhs;
+    friend mint operator+(mint lhs, const mint& rhs) {
+        return lhs += rhs;
     }
-    friend mint operator-(const mint& lhs, const mint& rhs) {
-        return mint(lhs) -= rhs;
+    friend mint operator-(mint lhs, const mint& rhs) {
+        return lhs -= rhs;
     }
-    friend mint operator*(const mint& lhs, const mint& rhs) {
-        return mint(lhs) *= rhs;
+    friend mint operator*(mint lhs, const mint& rhs) {
+        return lhs *= rhs;
     }
-    friend mint operator/(const mint& lhs, const mint& rhs) {
-        return mint(lhs) /= rhs;
+    friend mint operator/(mint lhs, const mint& rhs) {
+        return lhs /= rhs;
     }
-    friend bool operator==(const mint& lhs, const mint& rhs) {
+    friend bool operator==(const mint lhs, const mint& rhs) {
         return lhs._v == rhs._v;
     }
-    friend bool operator!=(const mint& lhs, const mint& rhs) {
+    friend bool operator!=(const mint lhs, const mint& rhs) {
         return lhs._v != rhs._v;
     }
     friend istream& operator>>(istream& is, mint& a) {
@@ -114,3 +125,5 @@ template <long long mod>
 mint<mod> pow(const mint<mod>& a, int k) { return a.pow(k); }
 
 #endif // MINT_H
+
+// End of mint.h

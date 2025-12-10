@@ -55,6 +55,7 @@ template <long long mod, int w>
 void ntt(poly<mint<mod>> &a, bool inv = false) {
     int n = a.size(), j = 0;
     assert((n & -n) == n); // n should be power of 2
+
     for(int i = 1; i < n; i++) {
         int bit = (n >> 1);
         while(j >= bit) {
@@ -89,9 +90,8 @@ void ntt(poly<mint<mod>> &a, bool inv = false) {
 
 template <long long mod, int w>
 poly<mint<mod>> conv(const poly<mint<mod>> &A, const poly<mint<mod>> &B) {
-    if(A.size() == 0 || B.size() == 0) {
+    if(A.size() == 0 || B.size() == 0)
         return poly<mint<mod>>();
-    }
     poly<mint<mod>> nA = A;
     poly<mint<mod>> nB = B;
     int conv_deg = A.deg() + B.deg();
@@ -201,10 +201,22 @@ public:
     }
 
     friend poly operator+(poly lhs, const poly& rhs) { return lhs += rhs; }
+    friend poly operator+(const poly& lhs, poly&& rhs) { rhs += lhs; return std::move(rhs); }
+    friend poly operator+(poly&& lhs, const poly& rhs) { lhs += rhs; return std::move(lhs); }
+    friend poly operator+(poly&& lhs, poly&& rhs) { rhs += lhs; return std::move(rhs); }
+
     friend poly operator-(poly lhs, const poly& rhs) { return lhs -= rhs; }
-    friend poly operator+(poly lhs, const T& rhs) { return lhs += rhs; }
-    friend poly operator-(poly lhs, const T& rhs) { return lhs -= rhs; }
+    friend poly operator-(const poly& lhs, poly&& rhs) { rhs.negate(); rhs += lhs; return std::move(rhs); }
+    friend poly operator-(poly&& lhs, const poly& rhs) { lhs -= rhs; return std::move(lhs); }
+    friend poly operator-(poly&& lhs, poly&& rhs) { lhs -= rhs; return std::move(lhs); }
+
     friend poly operator*(poly lhs, const poly& rhs) { return lhs *= rhs; }
+    friend poly operator/(poly lhs, const poly& rhs) { return lhs /= rhs; }
+
+    friend poly operator+(poly lhs, const T& rhs) { return lhs += rhs; }
+    friend poly operator+(const T& lhs, poly rhs) { return rhs += lhs; }
+    friend poly operator-(poly lhs, const T& rhs) { return lhs -= rhs; }
+    friend poly operator-(const T& lhs, poly rhs) { poly<T> res = -rhs; res += lhs; return res; }
     friend poly operator*(poly lhs, const T& rhs) { return lhs *= rhs; }
     friend poly operator*(const T& lhs, poly rhs) { return rhs *= lhs; }
     friend poly operator/(poly lhs, const T& rhs) { return lhs /= rhs; }
@@ -240,24 +252,34 @@ public:
     poly derivate() const {
         if (size() <= 1) return poly();
         std::vector<T> res(size() - 1);
-        for (int i = 1; i < size(); ++i) res[i - 1] = V[i] * T(i);
+        for (int i = 1; i < size(); ++i) 
+            res[i - 1] = V[i] * T(i);
         return poly(std::move(res));
     }
     poly integrate() const {
         if (empty()) return poly();
         std::vector<T> res(size() + 1);
         res[0] = T(0);
-        for (int i = 0; i < size(); ++i) res[i + 1] = V[i] / T(i + 1);
+        for (int i = 0; i < size(); ++i) 
+            res[i + 1] = V[i] / T(i + 1);
         return poly(std::move(res));
     }
     poly inv(int t) const {
         assert(V[0] != T(0));
-        poly<T> f = *this, g = poly<T>(1 / V[0]), h;
-        f %= t;
-        // g = g * (- (g * (f % i) % i) + T(2)) % i;
+        poly<T> f = *this % t, g = poly<T>(1 / V[0]), h;
+        int k;
         for(int i = 2; i <= 2 * t; i <<= 1) {
-            h = (f % i); h *= g; h %= i; h.negate();
-            h[0] += T(2); h *= g; h %= i; g = h;
+            k = i;
+            if(k > t) [[unlikely]] k = t;
+            // g = g * (- (g * (f % k) % k) + T(2)) % k;
+            h = (f % k);
+            h *= g;
+            h %= k;
+            h.negate();
+            h[0] += T(2);
+            h *= g;
+            h %= k;
+            g = h;
         }
         g %= t;
         return g;
@@ -270,17 +292,22 @@ public:
         h %= t; h = h.integrate(); h %= t;
         return h;
     }
-
     poly exp(int t) {
         assert(V[0] == T(0));
         poly<T> g = singleton(0);
-        poly<T> f = *this;
-        f %= t;
-        poly<T> h;
+        poly<T> f = *this % t, h;
+        int k;
         for(int i = 2; i <= 2 * t; i <<= 1) {
-            // g = g * ((f % i) + T(1) - (g.log(i))) % i;
-            h = f; h %= i; h[0] += T(1); h -= g.log(i); 
-            h *= g; h %= i; g = h;
+            k = i;
+            if(k > t) [[unlikely]] k = t;
+            // g = g * ((f % k) + T(1) - (g.log(k))) % k;
+            h = f;
+            h %= k;
+            h[0] += T(1);
+            h -= g.log(k);
+            h *= g;
+            h %= k;
+            g = h;
         }
         g %= t;
         return g;
@@ -432,5 +459,4 @@ template <typename T> poly<T> remainder(const poly<T>& f, const poly<T>& g) { re
 template <typename T> poly<T> taylor_shift(const poly<T>& f, T c) { return f.taylor_shift(c); }
 template <typename T> vector<T> multipoint_evaluation(const poly<T>& f, const vector<T>& points) { return f.multipoint_evaluation(points); }
 
-
-#endif // POLY_H
+#endif // POLY_H 
