@@ -1,0 +1,12 @@
+[
+    {
+        "key": "f9",
+        "command": "workbench.action.tasks.runTask",
+        "args": "run main.cpp"
+    },
+    {
+        "key": "f10",
+        "command": "workbench.action.tasks.runTask",
+        "args": "copy main.cpp"
+    }
+]
