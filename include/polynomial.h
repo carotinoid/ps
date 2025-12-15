@@ -75,6 +75,7 @@ void ntt(poly<mint<mod>> &a, bool inv = false) {
         if(i == 0) roots[i] = 1;
         else roots[i] = roots[i-1]*t;
     }
+
     for(int i = 2; i <= n; i <<= 1) {
         int step = n/i;
         for(int j = 0; j < n; j+=i) 
@@ -83,7 +84,8 @@ void ntt(poly<mint<mod>> &a, bool inv = false) {
                 mint<mod> v = a[j + k + i/2] * roots[step * k];
                 a[j + k] = u + v;
                 a[j + k + i/2] = u - v;
-            }}
+            }
+    }
     mint<mod> inv_n = mint<mod>(n).inv();
     if(inv) for(int i = 0; i < n; i++) a[i] *= inv_n;
 }
@@ -92,6 +94,18 @@ template <long long mod, int w>
 poly<mint<mod>> conv(const poly<mint<mod>> &A, const poly<mint<mod>> &B) {
     if(A.size() == 0 || B.size() == 0)
         return poly<mint<mod>>();
+    
+    if (std::min(A.size(), B.size()) <= 60) {
+        poly<mint<mod>> C;
+        C.resize(A.size() + B.size() - 1);
+        for (int i = 0; i < A.size(); i++) {
+            for (int j = 0; j < B.size(); j++) {
+                C[i + j] += A[i] * B[j];
+            }
+        }
+        return C;
+    }
+    
     poly<mint<mod>> nA = A;
     poly<mint<mod>> nB = B;
     int conv_deg = A.deg() + B.deg();
@@ -201,22 +215,10 @@ public:
     }
 
     friend poly operator+(poly lhs, const poly& rhs) { return lhs += rhs; }
-    friend poly operator+(const poly& lhs, poly&& rhs) { rhs += lhs; return std::move(rhs); }
-    friend poly operator+(poly&& lhs, const poly& rhs) { lhs += rhs; return std::move(lhs); }
-    friend poly operator+(poly&& lhs, poly&& rhs) { rhs += lhs; return std::move(rhs); }
-
     friend poly operator-(poly lhs, const poly& rhs) { return lhs -= rhs; }
-    friend poly operator-(const poly& lhs, poly&& rhs) { rhs.negate(); rhs += lhs; return std::move(rhs); }
-    friend poly operator-(poly&& lhs, const poly& rhs) { lhs -= rhs; return std::move(lhs); }
-    friend poly operator-(poly&& lhs, poly&& rhs) { lhs -= rhs; return std::move(lhs); }
-
-    friend poly operator*(poly lhs, const poly& rhs) { return lhs *= rhs; }
-    friend poly operator/(poly lhs, const poly& rhs) { return lhs /= rhs; }
-
     friend poly operator+(poly lhs, const T& rhs) { return lhs += rhs; }
-    friend poly operator+(const T& lhs, poly rhs) { return rhs += lhs; }
     friend poly operator-(poly lhs, const T& rhs) { return lhs -= rhs; }
-    friend poly operator-(const T& lhs, poly rhs) { poly<T> res = -rhs; res += lhs; return res; }
+    friend poly operator*(poly lhs, const poly& rhs) { return lhs *= rhs; }
     friend poly operator*(poly lhs, const T& rhs) { return lhs *= rhs; }
     friend poly operator*(const T& lhs, poly rhs) { return rhs *= lhs; }
     friend poly operator/(poly lhs, const T& rhs) { return lhs /= rhs; }
@@ -266,48 +268,29 @@ public:
     }
     poly inv(int t) const {
         assert(V[0] != T(0));
-        poly<T> f = *this % t, g = poly<T>(1 / V[0]), h;
+        poly<T> f = *this % t, g = poly<T>(1 / V[0]);
         int k;
         for(int i = 2; i <= 2 * t; i <<= 1) {
             k = i;
             if(k > t) [[unlikely]] k = t;
-            // g = g * (- (g * (f % k) % k) + T(2)) % k;
-            h = (f % k);
-            h *= g;
-            h %= k;
-            h.negate();
-            h[0] += T(2);
-            h *= g;
-            h %= k;
-            g = h;
+            g = g * (- (g * (f % k) % k) + T(2)) % k;
         }
         g %= t;
         return g;
     }
     poly log(int t) const {
         poly<T> f = *this;
-        poly<T> g, h;
-        // (f.derivate() * f.inv(t)).integrate() % t;
-        g = f.derivate(); h = f.inv(t); h *= g;
-        h %= t; h = h.integrate(); h %= t;
-        return h;
+        return (f.derivate() * f.inv(t)).integrate() % t;
     }
     poly exp(int t) {
         assert(V[0] == T(0));
         poly<T> g = singleton(0);
-        poly<T> f = *this % t, h;
+        poly<T> f = *this % t;
         int k;
         for(int i = 2; i <= 2 * t; i <<= 1) {
             k = i;
             if(k > t) [[unlikely]] k = t;
-            // g = g * ((f % k) + T(1) - (g.log(k))) % k;
-            h = f;
-            h %= k;
-            h[0] += T(1);
-            h -= g.log(k);
-            h *= g;
-            h %= k;
-            g = h;
+            g = g * ((f % k) + T(1) - (g.log(k))) % k;
         }
         g %= t;
         return g;
