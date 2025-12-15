@@ -43,8 +43,8 @@ struct poly_traits< mint<M> > {
 template <typename T> // forward declaration
 class poly;
 
-using cpx = complex<double>;
-using polycpx = vector<cpx>;
+using cpx = std::complex<double>;
+using polycpx = std::vector<cpx>;
 const double PI = acos(-1);
 
 void fft(polycpx &a, bool inv = false) {
@@ -437,9 +437,9 @@ template <typename T> poly<T> inv(poly<T>& p, int t) { return p.inv(p.size(), t)
 template <typename T> poly<T> log(poly<T>& p, int t) { return p.log(t); }
 template <typename T> poly<T> exp(poly<T>& p, int t) { return p.exp(t); }
 template <typename T> poly<T> pow(poly<T>& p, long long k, int t) { return p.pow(k, t); }
-template <typename T> pair<poly<T>, poly<T>> divide_and_remainder(const poly<T>& f, const poly<T>& g) { return f.divide_and_remainder(g); }
+template <typename T> std::pair<poly<T>, poly<T>> divide_and_remainder(const poly<T>& f, const poly<T>& g) { return f.divide_and_remainder(g); }
 template <typename T> poly<T> remainder(const poly<T>& f, const poly<T>& g) { return f.remainder(g); }
 template <typename T> poly<T> taylor_shift(const poly<T>& f, T c) { return f.taylor_shift(c); }
-template <typename T> vector<T> multipoint_evaluation(const poly<T>& f, const vector<T>& points) { return f.multipoint_evaluation(points); }
+template <typename T> std::vector<T> multipoint_evaluation(const poly<T>& f, const std::vector<T>& points) { return f.multipoint_evaluation(points); }
 
 #endif // POLY_H 
