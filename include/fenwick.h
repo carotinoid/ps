@@ -6,14 +6,10 @@
 
 template <typename T>
 class Fenwick {
-
-    private:
-
+private:
     std::vector<T> arr;
     std::vector<T> tree;
     inline unsigned size() const { return arr.size(); }
-
-
     void _update(int idx, T val) {
         arr[idx] += val;
         while(idx < size()) {
@@ -21,15 +17,11 @@ class Fenwick {
             idx = idx + (idx & -idx);
         }
     }
-
-
     void _set(int idx, T val) {
         T cur = arr[idx];
         T delta = val - cur;
         _update(idx, delta);
     }
-
-
     T _get_prefix(int idx) {
         T sum = 0;
         while(idx > 0) {
@@ -38,14 +30,9 @@ class Fenwick {
         }
         return sum;
     }
+    T _get_range(int l, int r) { return _get_prefix(r) - _get_prefix(l - 1); }
 
-
-    T _get_range(int l, int r) {
-        return _get_prefix(r) - _get_prefix(l - 1);
-    }
-
-    public:
-
+public:
     /**
      * @brief Constructor for Fenwick Tree
      * @param input Input array (1-indexed)
@@ -63,43 +50,33 @@ class Fenwick {
      * @param val Value to add
      * @return void
      */
-    void update(int idx, T val) {
-        _update(idx, val);
-    }
+    void update(int idx, T val) { _update(idx, val); }
     /**
      * @brief Function to set value at idx
      * @param idx Index to set (1-indexed)
      * @param val Value to set
      * @return void
      */
-    void set(int idx, T val) {
-        _set(idx, val); 
-    }
+    void set(int idx, T val) { _set(idx, val); }
     /**
      * @brief Function to get prefix sum up to idx
      * @param idx Index to get sum up to (1-indexed)
      * @return int Prefix sum
      */
-    T get_prefix(int idx) {
-        return _get_prefix(idx);
-    }
+    T get_prefix(int idx) { return _get_prefix(idx); }
     /**
      * @brief Function to get range sum from l to r
      * @param l Left index (1-indexed)
      * @param r Right index (1-indexed)
      * @return int Range sum
      */
-    T get_range(int l, int r) {
-        return _get_range(l, r);
-    }
+    T get_range(int l, int r) { return _get_range(l, r); }
     /**
      * @brief Function to get value at idx
      * @param idx Index to get value at (1-indexed)
      * @return int Value at idx
      */
-    T get_value(int idx) {
-        return arr[idx];
-    }
+    T get_value(int idx) { return arr[idx]; }
     /**
      * @brief Function to print the Fenwick Tree (for debugging, dummy is truncated)
      */
@@ -125,6 +102,5 @@ class Fenwick {
         cout << endl;
     }
 };
-
 
 #endif // FENWICK_H
