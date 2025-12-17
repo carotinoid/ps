@@ -16,3 +16,12 @@ echo "alias copy=$script_dir/copy.sh" >> ~/.bashrc
 echo "### End of alias commands ###" >> ~/.bashrc
 
 echo "The alias commands were added in ~/.bashrc"
+
+mkdir -p "$script_dir/src"
+touch "$script_dir/src/input.txt"
+touch "$script_dir/src/output.txt"
+touch "$script_dir/src/answer.cpp"
+touch "$script_dir/src/gen.cpp"
+touch "$script_dir/src/submit.cpp"
+ 
+echo "Created src/ directory with template files."
