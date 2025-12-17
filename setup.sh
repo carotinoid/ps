@@ -1,9 +1,18 @@
 #!/bin/bash
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+MARKER="### alias commands for ps tools ###"
 
-echo '# ps simple alias
-alias run="'$script_dir/run.sh'"
-alias stress="'$script_dir/stress.sh'"' >> ~/.bashrc
+if grep -qF "$MARKER" ~/.bashrc; then
+    echo "Alias commands already exist in ~/.bashrc"
+    exit 0
+fi
+
+echo "" >> ~/.bashrc
+echo "### alias commands for ps tools ###" >> ~/.bashrc
+echo "alias run=$script_dir/run.sh" >> ~/.bashrc
+echo "alias stress=$script_dir/stress.sh" >> ~/.bashrc
+echo "alias copy=$script_dir/copy.sh" >> ~/.bashrc
+echo "### End of alias commands ###" >> ~/.bashrc
 
 echo "The alias commands were added in ~/.bashrc"
