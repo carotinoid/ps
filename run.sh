@@ -2,50 +2,32 @@
 
 ###### Basic functions ######
 
-msg()  {
-    echo >&2 -e "${1-}"
-}
-
-msg_n()  {
-    echo >&2 -e -n "${1-}"
-}
-
-If_exist_then_delete()  {
+msg()  { echo >&2 -e "${1-}"; }
+msg_n()  { echo >&2 -e -n "${1-}"; }
+cleanup_file()  {
     if [[ -f $1 ]]; then
         rm $1
     fi
 }
-Print_line()  {
-    local terminal_width=$(tput cols)
-    local message=${1-""}
-    local sep=${2-"="}
-    local message_length=${#message}
-    local total_equals=$(( (terminal_width - message_length) / 2 ))
-    if (( (terminal_width - message_length) % 2 != 0 )); then
-        total_equals=$((total_equals + 1))
+print_line() {
+    local title=${1-""}
+    local char=${2-"="}
+    local cols=$(tput cols || echo 80)
+    
+    if [[ -z "$title" ]]; then
+        printf '%*s\n' "$cols" '' | tr ' ' "$char"
+    else
+        local line_len=$(( (cols - ${#title}) / 2 - 1 ))
+        [[ $line_len -lt 0 ]] && line_len=0
+        
+        local line=$(printf '%*s' "$line_len" '' | tr ' ' "$char")
+        printf "%s %s %s\n" "$line" "$title" "$line"
     fi
-    local post_equals=$total_equals
-    if (( total_equals + total_equals + message_length > terminal_width )); then
-        post_equals=$((total_equals - 1))
-    fi
-    printf '%*s%s%*s\n' $total_equals '' "$message" $post_equals '' | tr ' ' $sep
 }
-Erase()  {
+erase()  {
     for ((i=0;i<${1-1};i++)); do
         msg_n "\b \b"
     done
-}
-
-Clear_end()  {
-    local str=$1
-    while true; do
-        if [ "${str: -1}" = $'\n' -o "${str: -1}" = ' ' ]; then
-            str=${str%?}
-        else
-            break
-        fi
-    done
-    echo $str
 }
 
 die()  {
@@ -63,7 +45,7 @@ setup_colors()  {
     fi
 }
 
-Check_hash()  {
+check_file_hash()  {
     local file_path=$1
     local file_name=$2
     local hash_dir=${3:-$TEMP}
@@ -117,23 +99,17 @@ OLD_IFS=$IFS
 usage() {
     cat <<EOF
 Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-f FILE] [-i] [-t TIME]
-A basic shell script to compile and execute C++ files.
-  
-Options:
-  -h, --help       Display this help message.
-  -v, --version    Show the script version.
-  -f, --file       Specify a C++ file to compile and run.
-                   (Default: main.cpp)
-  -i, --input      Use input.txt as input data.
-  -t, --time       Set the execution time limit (in seconds).
-                   (Default: 2 seconds)
-  -d, --direct     Direct run.
+C++ Compile & Run Helper Script.
 
-Special Options:
-  --flush          Remove all cached and generated files.
-  --no-color       Disable color output in the terminal.
-  --verbose        Enable detailed debug messages.
-  
+Options:
+  -h, --help      Display this help message.
+  -v, --version   Show version.
+  -f, --file      Specify C++ file (Default: main.cpp).
+  -i, --input     Use existing input.txt (Don't ask for input).
+  -t, --time      Set timeout in seconds (Default: 2s).
+  -d, --direct    Run existing binary directly.
+  --flush         Clear cache and temp files.
+
 EOF
     exit 0
 }
@@ -142,27 +118,27 @@ cleanup() {
     trap - SIGINT SIGTERM ERR EXIT
     IFS=$OLD_IFS
     if [[ -f $SRC_OTHER/input.txt ]]; then
-        Print_line "Input" 
+        print_line "Input" 
         msg "$(cat $SRC_OTHER/input.txt)"
-        Print_line 
+        print_line 
     fi
 
     if (( CHECK_TIMEOUT )); then
         msg "${RED}[FAIL] Time Limit Exceeded${NOFORMAT} (> ${ExecutionTime}s)"
-        Print_line
+        print_line
     elif (( CHECK_RUNTIME_ERROR )); then
         msg "${RED}[FAIL] Runtime Error${NOFORMAT} (Exit Code: $EXIT_CODE)"
-        Print_line
+        print_line
     fi
     if [[ -s $SRC_OTHER/output.txt ]]; then
-        Print_line "Output" 
+        print_line "Output" 
         msg "$(cat $SRC_OTHER/output.txt)"
-        Print_line
+        print_line
     fi
     if [[ -s $TEMP/exec_err ]]; then
-        Print_line "ERROR" 
+        print_line "ERROR" 
         msg "$(cat $TEMP/exec_err)"
-        Print_line
+        print_line
     fi
 }
 
@@ -213,15 +189,15 @@ mkdir -p "$TEMP"
 mkdir -p "$SRC_OTHER"
 
 trap cleanup SIGINT SIGTERM ERR EXIT
-If_exist_then_delete $SRC_OTHER/output.txt
-If_exist_then_delete $TEMP/exec_err
-If_exist_then_delete $TEMP/compile_err
+cleanup_file $SRC_OTHER/output.txt
+cleanup_file $TEMP/exec_err
+cleanup_file $TEMP/compile_err
 
 # Check update
 need_compile=0
 CompileDoneNumofBackspace=10
 
-checking_hash=$(Check_hash $SRC_TARGET $FILE_CODE)
+checking_hash=$(check_file_hash $SRC_TARGET $FILE_CODE)
 if [[ $checking_hash -eq 0 ]]; then
     msg_n "No hash, ${ORANGE}compiling.${NOFORMAT}"
     need_compile=1
@@ -236,14 +212,23 @@ fi
 time_startCompile=$(date +%s.%3N)
 if (( need_compile )); then
 
-    g++ -o $TEMP/$FILE_CODE.run -I$WORKSPACE -O2 -DDEBUGTOOLS -fsanitize=undefined,address -Wno-unused-but-set-variable -Wno-unused-variable -lm -std=c++2a -g $SRC_TARGET/$FILE_CODE 2> $TEMP/compile_err &
+    g++ -o $TEMP/$FILE_CODE.run \
+        -I$WORKSPACE \
+        -O2 \
+        -DDEBUGTOOLS \
+        -fsanitize=undefined,address \
+        -Wno-unused-but-set-variable \
+        -Wno-unused-variable \
+        -lm \
+        -std=c++2a \
+        -g $SRC_TARGET/$FILE_CODE 2> $TEMP/compile_err &
     pid=$!
     while kill -0 $pid 2>/dev/null; do
         sleep 0.5
         (( CompileDoneNumofBackspace++ ))
         msg_n "${ORANGE}.${NOFORMAT}"
     done
-    Erase $CompileDoneNumofBackspace
+    erase $CompileDoneNumofBackspace
 
     if wait $pid; then
         :
@@ -260,18 +245,6 @@ if (( need_compile )); then
     msg_n "${GREEN}Compile Done!${NOFORMAT} "
     msg_n "${GREEN}($time_elapsedCompile"
     msg "s)${NOFORMAT}"
-
-    # if [[ -s $TEMP/compile_err ]]; then
-    #     msg "${RED}Compile incomplete!${NOFORMAT}"
-    #     cat $TEMP/compile_err
-    #     rm $TEMP/$FILE_CODE.hash
-    #     die "${RED}ERROR OCCURED.${NOFORMAT}"
-    # fi
-    # time_endCompile=$(date +%s.%3N)
-    # time_elapsedCompile=$(echo "$time_endCompile - $time_startCompile" | bc)
-    # msg_n "${GREEN}Compile Done!${NOFORMAT} "
-    # msg_n "${GREEN}($time_elapsedCompile"
-    # msg "s)${NOFORMAT}"
 fi
 
 # Input
@@ -291,3 +264,5 @@ if [[ $EXIT_CODE -eq 124 ]]; then
 elif [[ $EXIT_CODE -ne 0 ]]; then
     CHECK_RUNTIME_ERROR=1
 fi
+
+# trap on exit
