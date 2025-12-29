@@ -165,6 +165,17 @@ parse_params() {
         ExecutionTime="${2-}"
         shift ;;
         -d | --direct)
+        g++ -o $TEMP/$FILE_CODE.run \
+            -I$WORKSPACE \
+            -O2 \
+            -DDEBUGTOOLS \
+            -fsanitize=undefined,address \
+            -Wno-unused-but-set-variable \
+            -Wno-unused-variable \
+            -lm \
+            -std=c++2a \
+            -g $SRC_TARGET/$FILE_CODE 2> $TEMP/compile_err 
+        msg "compile done"
         if [[ -f "$TEMP/$FILE_CODE.run" ]]; then
             "$TEMP/$FILE_CODE.run"
             exit $?
