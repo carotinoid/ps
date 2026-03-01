@@ -220,9 +220,10 @@ else
 fi
 
 # Compile
-time_startCompile=$(date +%s.%3N)
 if (( need_compile )); then
 
+    time_startCompile_ms=$(($(date +%s%N) / 1000000))
+    
     g++ -o $TEMP/$FILE_CODE.run \
         -I$WORKSPACE \
         -O2 \
@@ -251,8 +252,14 @@ if (( need_compile )); then
         exit 1
     fi
 
-    time_endCompile=$(date +%s.%3N)
-    time_elapsedCompile=$(echo "$time_endCompile - $time_startCompile" | bc)
+    time_endCompile_ms=$(($(date +%s%N) / 1000000))
+    time_elapsed_ms=$((time_endCompile_ms - time_startCompile_ms))
+
+    elapsed_s=$((time_elapsed_ms / 1000))
+    elapsed_ms=$((time_elapsed_ms % 1000))
+
+    printf -v time_elapsedCompile "%d.%03d" "$elapsed_s" "$elapsed_ms"
+    
     msg_n "${GREEN}Compile Done!${NOFORMAT} "
     msg_n "${GREEN}($time_elapsedCompile"
     msg "s)${NOFORMAT}"
